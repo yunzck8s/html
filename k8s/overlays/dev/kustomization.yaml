@@ -8,7 +8,7 @@ namespace: latency-monitor-dev
 
 # 引用基础配置
 resources:
-- ../base
+- ../../base
 
 # 覆盖命名空间
 nameSuffix: -dev
