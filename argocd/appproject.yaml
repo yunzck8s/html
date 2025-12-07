@@ -1,0 +1,74 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: latency-monitor
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  description: "域名延迟监控工具项目"
+
+  # 允许的源仓库
+  sourceRepos:
+  - 'https://github.com/zunshen/latency-monitor.git'
+  - '*'  # 允许所有仓库（生产环境建议限制）
+
+  # 允许的目标集群和命名空间
+  destinations:
+  - namespace: 'latency-monitor*'
+    server: https://kubernetes.default.svc
+  - namespace: argocd
+    server: https://kubernetes.default.svc
+
+  # 允许的资源类型
+  clusterResourceWhitelist:
+  - group: ''
+    kind: Namespace
+  - group: 'networking.k8s.io'
+    kind: Ingress
+
+  # 命名空间资源白名单
+  namespaceResourceWhitelist:
+  - group: ''
+    kind: Service
+  - group: ''
+    kind: ConfigMap
+  - group: ''
+    kind: Secret
+  - group: 'apps'
+    kind: Deployment
+  - group: 'apps'
+    kind: StatefulSet
+  - group: 'autoscaling'
+    kind: HorizontalPodAutoscaler
+  - group: 'networking.k8s.io'
+    kind: Ingress
+
+  # 禁止的资源类型（可选）
+  # namespaceResourceBlacklist:
+  # - group: ''
+  #   kind: ResourceQuota
+
+  # Sync windows（同步窗口，可选）
+  # syncWindows:
+  # - kind: allow
+  #   schedule: '0 22 * * *'  # 每天晚上10点允许同步
+  #   duration: 1h
+  #   applications:
+  #   - latency-monitor-prod
+
+  # 角色配置
+  roles:
+  - name: read-only
+    description: "只读权限"
+    policies:
+    - p, proj:latency-monitor:read-only, applications, get, latency-monitor/*, allow
+    groups:
+    - developers
+
+  - name: deploy
+    description: "部署权限"
+    policies:
+    - p, proj:latency-monitor:deploy, applications, *, latency-monitor/*, allow
+    groups:
+    - devops

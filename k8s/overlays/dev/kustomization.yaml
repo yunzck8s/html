@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: latency-monitor-dev
+
+namespace: latency-monitor-dev
+
+# 引用基础配置
+resources:
+- ../base
+
+# 覆盖命名空间
+nameSuffix: -dev
+
+# 副本数配置
+replicas:
+- name: latency-monitor
+  count: 1
+
+# 镜像配置
+images:
+- name: zunshen/latency-monitor
+  newTag: dev
+
+# ConfigMap 补丁
+configMapGenerator:
+- name: latency-monitor-config
+  behavior: merge
+  literals:
+  - ENVIRONMENT=dev
+  - LOG_LEVEL=debug
+
+# Patch 配置
+patchesStrategicMerge:
+- deployment-patch.yaml

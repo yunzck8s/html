@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: latency-monitor
+  labels:
+    app: latency-monitor
+    app.kubernetes.io/name: latency-monitor
+    app.kubernetes.io/component: web
+  annotations:
+    # 根据你的 Ingress Controller 选择合适的注解
+    # 以下是 nginx-ingress 的示例
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # 如果使用 cert-manager
+spec:
+  ingressClassName: nginx  # 根据你的环境调整
+  tls:
+  - hosts:
+    - latency-monitor.example.com  # 替换为你的域名
+    secretName: latency-monitor-tls
+  rules:
+  - host: latency-monitor.example.com  # 替换为你的域名
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: latency-monitor
+            port:
+              name: http

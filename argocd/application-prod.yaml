@@ -1,0 +1,70 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: latency-monitor-prod
+  namespace: argocd
+  # Finalizer 确保级联删除
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  labels:
+    app: latency-monitor
+    environment: production
+  annotations:
+    # 通知配置
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: "deployments"
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: "alerts"
+spec:
+  # 项目名称
+  project: default
+
+  # 源配置
+  source:
+    # Git 仓库地址 - 请替换为你的实际仓库地址
+    repoURL: https://github.com/zunshen/latency-monitor.git
+    targetRevision: main
+    path: k8s/overlays/prod
+
+    # Kustomize 配置
+    kustomize:
+      version: v5.0.0
+      # 镜像覆盖（可选，用于指定特定版本）
+      images:
+      - zunshen/latency-monitor:latest
+
+  # 目标集群配置
+  destination:
+    # 集群地址，in-cluster 表示当前集群
+    server: https://kubernetes.default.svc
+    namespace: latency-monitor
+
+  # 同步策略
+  syncPolicy:
+    # 手动同步（生产环境建议手动控制）
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+
+    # 同步选项
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+
+    # 重试策略
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # 忽略差异配置
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+    - /spec/replicas  # 使用 HPA 时忽略副本数差异
+
+  # 健康检查配置
+  revisionHistoryLimit: 10

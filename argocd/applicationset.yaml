@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: latency-monitor
+  namespace: argocd
+spec:
+  # 生成器：从 Git 目录生成多个 Application
+  generators:
+  - git:
+      repoURL: https://github.com/zunshen/latency-monitor.git
+      revision: main
+      directories:
+      - path: k8s/overlays/*
+
+  # Application 模板
+  template:
+    metadata:
+      name: 'latency-monitor-{{path.basename}}'
+      namespace: argocd
+      labels:
+        app: latency-monitor
+        environment: '{{path.basename}}'
+      finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/zunshen/latency-monitor.git
+        targetRevision: main
+        path: '{{path}}'
+        kustomize:
+          version: v5.0.0
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'latency-monitor-{{path.basename}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+        - PrunePropagationPolicy=foreground
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
