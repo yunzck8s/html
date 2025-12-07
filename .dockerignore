@@ -1,0 +1,28 @@
+# Git 相关
+.git
+.gitignore
+.github
+
+# 文档
+README.md
+*.md
+
+# 音频和图片（保留需要的）
+hbd.mp3
+pic/
+
+# 旧的 HTML 目录
+html/
+
+# 开发工具
+.vscode
+.idea
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# CI/CD
+.github/workflows/
